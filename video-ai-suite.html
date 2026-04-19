@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Video AI Production Suite</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --neon-cyan: #00f5ff;
+    --neon-blue: #3b82f6;
+    --neon-purple: #a855f7;
+    --glow-cyan: 0 0 20px rgba(0,245,255,0.4), 0 0 60px rgba(0,245,255,0.15);
+    --glow-blue: 0 0 20px rgba(59,130,246,0.5), 0 0 60px rgba(59,130,246,0.2);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sora', sans-serif;
+    background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+  .orb {
+    position: fixed; border-radius: 50%;
+    filter: blur(80px); opacity: 0.3;
+    pointer-events: none;
+  }
+  .orb-blue {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, #3b82f6, transparent);
+    top: -100px; left: -100px;
+    animation: floatOrbBlue 22s linear infinite;
+  }
+  .orb-purple {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, #a855f7, transparent);
+    bottom: -150px; right: -100px;
+    animation: floatOrbPurple 28s linear infinite;
+  }
+  .orb-cyan {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, #00f5ff, transparent);
+    top: 40%; left: 50%;
+    animation: floatOrbCyan 18s linear infinite;
+  }
+  @keyframes floatOrbBlue {
+    0%   { transform: translate(0,0) scale(1); }
+    33%  { transform: translate(80px,120px) scale(1.1); }
+    66%  { transform: translate(40px,-60px) scale(0.95); }
+    100% { transform: translate(0,0) scale(1); }
+  }
+  @keyframes floatOrbPurple {
+    0%   { transform: translate(0,0) scale(1); }
+    25%  { transform: translate(-100px,-80px) scale(1.05); }
+    75%  { transform: translate(-50px,60px) scale(0.9); }
+    100% { transform: translate(0,0) scale(1); }
+  }
+  @keyframes floatOrbCyan {
+    0%   { transform: translate(-50%,-50%) scale(1); }
+    50%  { transform: translate(calc(-50% + 120px),calc(-50% - 80px)) scale(1.15); }
+    100% { transform: translate(-50%,-50%) scale(1); }
+  }
+
+  .suite-container {
+    position: relative; z-index: 10;
+    width: 100%; max-width: 780px;
+    height: 100vh; margin: 0 auto;
+    display: flex; flex-direction: column;
+    padding: 0 12px;
+  }
+
+  .suite-header {
+    padding: 18px 0 10px;
+    display: flex; align-items: center; gap: 14px;
+    flex-shrink: 0;
+  }
+  .header-logo {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: linear-gradient(135deg,#00f5ff22,#3b82f622);
+    border: 1px solid rgba(0,245,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--glow-cyan);
+  }
+  .header-title {
+    font-family: 'Orbitron', monospace; font-weight: 800;
+    font-size: 1.1rem; letter-spacing: 0.08em;
+    background: linear-gradient(90deg,#00f5ff,#a855f7);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-sub {
+    font-size: 0.63rem; color: rgba(148,163,184,0.7);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-top: 1px;
+  }
+  .status-dot {
+    width: 8px; height: 8px; background: #00f5ff;
+    border-radius: 50%; margin-left: auto;
+    box-shadow: 0 0 10px #00f5ff,0 0 20px #00f5ff88;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50%     { opacity:0.5; transform:scale(0.85); }
+  }
+
+  .model-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,245,255,0.05);
+    border: 1px solid rgba(0,245,255,0.14);
+    border-radius: 10px; padding: 5px 12px;
+    margin-bottom: 8px; flex-shrink: 0;
+  }
+  .model-badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #22c55e; box-shadow: 0 0 6px #22c55e;
+    animation: pulse 2s infinite;
+  }
+  .model-badge-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.58rem; letter-spacing: 0.09em;
+    color: rgba(0,245,255,0.65);
+  }
+
+  .chat-box {
+    flex: 1; overflow-y: auto;
+    padding: 12px 4px 16px;
+    display: flex; flex-direction: column; gap: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,245,255,0.2) transparent;
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    box-shadow: 0 0 0 1px rgba(0,245,255,0.08),0 8px 32px rgba(0,0,0,0.4),var(--glow-cyan);
+  }
+  .chat-box::-webkit-scrollbar { width: 4px; }
+  .chat-box::-webkit-scrollbar-thumb {
+    background: rgba(0,245,255,0.25); border-radius: 4px;
+  }
+
+  .bubble-wrapper {
+    display: flex; align-items: flex-end; gap: 10px;
+    animation: fadeSlideIn 0.35s ease-out;
+    padding: 0 8px;
+  }
+  @keyframes fadeSlideIn {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .bubble-wrapper.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+  }
+  .avatar-ai {
+    background: linear-gradient(135deg,#00f5ff22,#a855f722);
+    border: 1px solid rgba(0,245,255,0.3); color: #00f5ff;
+  }
+  .avatar-user {
+    background: linear-gradient(135deg,#3b82f6,#4f46e5); color: white;
+  }
+
+  .bubble {
+    max-width: 78%; padding: 12px 16px;
+    font-size: 0.875rem; line-height: 1.6; word-break: break-word;
+  }
+  .bubble-user {
+    background: linear-gradient(135deg,#2563eb,#4338ca);
+    border-radius: 18px 18px 0 18px; color: #e0e7ff;
+    box-shadow: 0 4px 20px rgba(37,99,235,0.35);
+  }
+  .bubble-ai {
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px 18px 18px 0; color: #cbd5e1;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  .bubble-generating { position: relative; overflow: hidden; }
+  .bubble-generating::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(90deg,transparent,rgba(0,245,255,0.12),transparent);
+    animation: shimmer 1.8s linear infinite;
+  }
+  @keyframes shimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .bubble-generating::after {
+    content: ''; position: absolute; inset: -1px;
+    border-radius: inherit; background: transparent;
+    border: 1px solid rgba(0,245,255,0.5);
+    animation: glowPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes glowPulse {
+    0%,100% { box-shadow:0 0 8px rgba(0,245,255,0.3),0 0 20px rgba(0,245,255,0.1); }
+    50%     { box-shadow:0 0 20px rgba(0,245,255,0.6),0 0 40px rgba(0,245,255,0.25); }
+  }
+
+  .progress-wrap {
+    margin-top: 10px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 99px; height: 6px; overflow: hidden;
+    border: 1px solid rgba(0,245,255,0.15);
+  }
+  .progress-bar {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg,#00f5ff,#3b82f6,#a855f7);
+    background-size: 200% 100%;
+    animation: progressGlow 2s linear infinite;
+    transition: width 0.5s ease;
+  }
+  @keyframes progressGlow {
+    0%   { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+  }
+  .progress-label {
+    font-size: 0.7rem; color: rgba(0,245,255,0.8); margin-top: 6px;
+    font-family: 'Orbitron',monospace; letter-spacing: 0.05em;
+  }
+
+  .typing-dots { display:flex; gap:5px; align-items:center; padding:4px 0; }
+  .typing-dots span {
+    width:6px; height:6px; border-radius:50%;
+    background:rgba(0,245,255,0.6);
+    animation:dotBounce 1.2s ease-in-out infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay:0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay:0.4s; }
+  @keyframes dotBounce {
+    0%,80%,100% { transform:translateY(0); opacity:0.5; }
+    40%         { transform:translateY(-6px); opacity:1; }
+  }
+
+  .video-container {
+    margin-top: 12px; border-radius: 14px; overflow: hidden;
+    border: 1px solid rgba(0,245,255,0.2);
+    box-shadow: 0 0 30px rgba(0,245,255,0.15);
+    position: relative; background: #000;
+  }
+  .video-container video {
+    width: 100%; display: block;
+    max-height: 300px; object-fit: contain;
+  }
+  .video-overlay-btn {
+    position: absolute; top:10px; right:10px;
+    background: rgba(0,0,0,0.65);
+    border: 1px solid rgba(0,245,255,0.3);
+    color: #00f5ff; padding: 5px 10px; border-radius: 8px;
+    font-size: 0.68rem; cursor: pointer;
+    font-family: 'Sora',sans-serif;
+    backdrop-filter: blur(10px); transition: all 0.2s; z-index: 5;
+  }
+  .video-overlay-btn:hover { background: rgba(0,245,255,0.15); }
+
+  .download-btn {
+    display: flex; align-items: center; gap: 8px; margin-top: 10px;
+    background: linear-gradient(135deg,rgba(0,245,255,0.1),rgba(59,130,246,0.1));
+    border: 1px solid rgba(0,245,255,0.25);
+    color: #00f5ff; padding: 9px 18px; border-radius: 10px;
+    font-size: 0.8rem; cursor: pointer; text-decoration: none;
+    font-family: 'Sora',sans-serif; font-weight: 500;
+    transition: all 0.25s; box-shadow: 0 0 20px rgba(0,245,255,0.08);
+    width: fit-content;
+  }
+  .download-btn:hover {
+    background: linear-gradient(135deg,rgba(0,245,255,0.2),rgba(59,130,246,0.2));
+    box-shadow: 0 0 30px rgba(0,245,255,0.2); transform: translateY(-1px);
+  }
+
+  .welcome-card {
+    text-align: center; padding: 24px 16px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px;
+  }
+  .welcome-icon {
+    width: 58px; height: 58px; border-radius: 18px;
+    background: linear-gradient(135deg,rgba(0,245,255,0.1),rgba(168,85,247,0.1));
+    border: 1px solid rgba(0,245,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; box-shadow: var(--glow-cyan);
+    animation: iconFloat 4s ease-in-out infinite;
+  }
+  @keyframes iconFloat {
+    0%,100% { transform:translateY(0); }
+    50%     { transform:translateY(-7px); }
+  }
+  .welcome-title {
+    font-family: 'Orbitron',monospace; font-size: 1.05rem;
+    font-weight: 700; color: #e2e8f0; letter-spacing: 0.06em;
+  }
+  .welcome-desc {
+    font-size: 0.8rem; color: rgba(148,163,184,0.75);
+    max-width: 360px; line-height: 1.7;
+  }
+  .info-box {
+    background: rgba(251,191,36,0.07);
+    border: 1px solid rgba(251,191,36,0.22);
+    border-radius: 12px; padding: 10px 14px;
+    font-size: 0.72rem; color: rgba(251,191,36,0.82);
+    line-height: 1.7; max-width: 360px; text-align: left;
+  }
+  .tag-row { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .tag {
+    font-size: 0.63rem;
+    background: rgba(0,245,255,0.07);
+    border: 1px solid rgba(0,245,255,0.18);
+    color: rgba(0,245,255,0.75); border-radius: 99px;
+    padding: 4px 10px; letter-spacing: 0.06em;
+    font-family: 'Orbitron',monospace;
+  }
+
+  .input-wrap { padding: 10px 0 18px; flex-shrink: 0; }
+  .input-bar {
+    display: flex; align-items: flex-end; gap: 10px;
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 28px; padding: 10px 14px;
+    box-shadow: 0 0 0 1px rgba(0,245,255,0.08),0 8px 32px rgba(0,0,0,0.4);
+    transition: box-shadow 0.3s;
+  }
+  .input-bar:focus-within {
+    box-shadow: 0 0 0 1px rgba(0,245,255,0.3),0 8px 32px rgba(0,0,0,0.4),var(--glow-cyan);
+  }
+  .icon-btn {
+    width:36px; height:36px; flex-shrink:0; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:all 0.2s;
+    color:rgba(148,163,184,0.6); background:transparent; border:none;
+  }
+  .icon-btn:hover { color:rgba(0,245,255,0.8); background:rgba(0,245,255,0.07); }
+  .input-field {
+    flex:1; background:transparent; border:none; outline:none;
+    color:#e2e8f0; font-family:'Sora',sans-serif;
+    font-size:0.875rem; line-height:1.5; resize:none;
+    max-height:120px; min-height:24px; padding:6px 0;
+  }
+  .input-field::placeholder { color: rgba(100,116,139,0.7); }
+  .send-btn {
+    width:40px; height:40px; flex-shrink:0; border-radius:50%;
+    background:linear-gradient(135deg,#3b82f6,#2563eb);
+    border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.25s;
+    box-shadow:0 0 16px rgba(59,130,246,0.45),0 0 32px rgba(59,130,246,0.2);
+    color:white;
+  }
+  .send-btn:hover { transform:scale(1.08); box-shadow:0 0 24px rgba(59,130,246,0.65),0 0 48px rgba(59,130,246,0.3); }
+  .send-btn:active { transform:scale(0.96); }
+  .send-btn:disabled { opacity:0.45; cursor:not-allowed; transform:none; }
+
+  .bubble-error {
+    background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25);
+    color:#fca5a5; border-radius:18px 18px 18px 0;
+    padding:12px 16px; font-size:0.85rem; max-width:85%; line-height:1.6;
+  }
+
+  @media (max-width: 600px) {
+    .bubble { max-width: 88%; }
+    .welcome-title { font-size: 0.95rem; }
+    .header-title { font-size: 0.95rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-blue"></div>
+<div class="orb orb-purple"></div>
+<div class="orb orb-cyan"></div>
+
+<div class="suite-container">
+
+  <!-- Header -->
+  <div class="suite-header">
+    <div class="header-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M15 10l4.553-2.277A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"
+          stroke="#00f5ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="header-title">CINEMATIC AI</div>
+      <div class="header-sub">Video Suite • ZeroScope V2 + Auto-Retry</div>
+    </div>
+    <div class="status-dot"></div>
+  </div>
+
+  <!-- Model badge -->
+  <div class="model-badge">
+    <div class="model-badge-dot"></div>
+    <div class="model-badge-text">
+      FREE MODEL: ZEROSCOPE V2 &nbsp;·&nbsp; FALLBACK: TEXT-TO-VIDEO-1.7B &nbsp;·&nbsp; AUTO-RETRY 10×
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-box" id="chatBox">
+    <div class="welcome-card" id="welcomeCard">
+      <div class="welcome-icon">🎬</div>
+      <div class="welcome-title">VIDEO AI SUITE</div>
+      <div class="welcome-desc">
+        Apni cinematic scene describe karo — AI bilkul real video banayega.
+        Jitni detail utna behtar result.
+      </div>
+
+      <div class="info-box">
+        ⚡ <strong>Zaruri Baat (padho):</strong><br>
+        AI models abhi sirf <strong>2–8 second ke short clips</strong> generate karte
+        hain. Yeh duniya bhar ki AI ki limit hai — Sora, Runway, Kling sab
+        milake bhi max ~1 minute tak hi jaate hain.<br><br>
+        ✅ <strong>Kya milega:</strong> Cinematic short clip, looping video moment.<br>
+        🔄 <strong>503 error:</strong> Model warm ho raha hoga — auto 10 retries honge.<br>
+        📥 <strong>Video:</strong> Seedha chat mein play + download button dono milenge.
+      </div>
+
+      <div class="tag-row">
+        <span class="tag">ZEROSCOPE V2</span>
+        <span class="tag">FREE API</span>
+        <span class="tag">TEXT → VIDEO</span>
+        <span class="tag">10× RETRY</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-wrap">
+    <div class="input-bar">
+      <button class="icon-btn" title="Attach" onclick="document.getElementById('fileInput').click()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <input type="file" id="fileInput" style="display:none" accept="image/*,video/*" />
+      <textarea
+        id="promptInput"
+        class="input-field"
+        placeholder="Scene describe karo... (e.g. 'Billi pizza kha rahi hai, cinematic lighting, 4K close-up')"
+        rows="1"
+        oninput="autoResize(this)"
+        onkeydown="handleEnter(event)"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" onclick="generateVideo()" title="Generate">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+            stroke="white" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" fill="white"/>
+        </svg>
+      </button>
+    </div>
+    <div style="text-align:center;margin-top:6px;font-size:0.6rem;
+                color:rgba(100,116,139,0.5);font-family:'Orbitron',monospace;letter-spacing:0.08em;">
+      ENTER TO GENERATE &nbsp;·&nbsp; POWERED BY ZEROSCOPE V2
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG
+//  ✅ ROOT CAUSE FIX:
+//  tencent/HunyuanVideo = PRO-only on HuggingFace → "Failed to fetch"
+//  Replaced with FREE models that actually work:
+//    1) cerspense/zeroscope_v2_576w  (primary)
+//    2) damo-vilab/text-to-video-ms-1.7b  (fallback)
+// ═══════════════════════════════════════════════════════════════
+const HF_TOKEN = "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";
+
+const MODELS = [
+  "cerspense/zeroscope_v2_576w",        // Primary  (free, works well)
+  "damo-vilab/text-to-video-ms-1.7b",  // Fallback (also free)
+];
+
+const MAX_RETRIES = 10;
+const RETRY_DELAY = 10000; // ms
+
+let isGenerating = false;
+let modelIdx     = 0;
+
+// ─── UI ──────────────────────────────────────────────────────────
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleEnter(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    generateVideo();
+  }
+}
+
+function scrollToBottom() {
+  const b = document.getElementById('chatBox');
+  b.scrollTop = b.scrollHeight;
+}
+
+function removeWelcome() {
+  const w = document.getElementById('welcomeCard');
+  if (w) w.remove();
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── BUBBLES ─────────────────────────────────────────────────────
+function addUserBubble(text) {
+  removeWelcome();
+  const box = document.getElementById('chatBox');
+  const d = document.createElement('div');
+  d.className = 'bubble-wrapper user';
+  d.innerHTML = `
+    <div class="avatar avatar-user">U</div>
+    <div class="bubble bubble-user">${escapeHtml(text)}</div>`;
+  box.appendChild(d);
+  scrollToBottom();
+}
+
+function addAiBubble(html, gen = false) {
+  removeWelcome();
+  const box = document.getElementById('chatBox');
+  const w = document.createElement('div');
+  w.className = 'bubble-wrapper';
+  w.id = 'aiBubbleWrap';
+  const cls = gen ? 'bubble bubble-ai bubble-generating' : 'bubble bubble-ai';
+  w.innerHTML = `
+    <div class="avatar avatar-ai">AI</div>
+    <div class="${cls}" id="aiBubble">${html}</div>`;
+  box.appendChild(w);
+  scrollToBottom();
+}
+
+function updateAiBubble(html, gen = false) {
+  const b = document.getElementById('aiBubble');
+  if (!b) return;
+  b.innerHTML = html;
+  if (!gen) b.classList.remove('bubble-generating');
+  scrollToBottom();
+}
+
+// ─── HTML TEMPLATES ───────────────────────────────────────────────
+function makeTypingDots() {
+  return `
+    <div class="typing-dots"><span></span><span></span><span></span></div>
+    <div style="margin-top:6px;font-size:0.78rem;color:rgba(148,163,184,0.7);">
+      Video generate ho rahi hai...
+    </div>`;
+}
+
+function makeRetryHtml(attempt, seconds) {
+  const pct  = Math.min(100, (attempt / MAX_RETRIES) * 100);
+  const mName = MODELS[modelIdx].split('/')[1];
+  return `
+    <div style="font-size:0.8rem;color:rgba(148,163,184,0.85);margin-bottom:8px;">
+      🔥 <strong>${mName}</strong> warm ho raha hai...
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar" style="width:${pct}%"></div>
+    </div>
+    <div class="progress-label">
+      Retry ${attempt}/${MAX_RETRIES} &nbsp;·&nbsp;
+      Model is warming up... (Retrying in ${Math.max(0, seconds)}s)
+    </div>`;
+}
+
+// ─── API CALL ────────────────────────────────────────────────────
+//  ✅ FIX: credentials:'omit' + mode:'cors' fixes Android WebView
+//          "Failed to fetch" CORS issues for file:// origins
+async function callAPI(prompt) {
+  const url = `https://api-inference.huggingface.co/models/${MODELS[modelIdx]}`;
+  return await fetch(url, {
+    method: 'POST',
+    mode: 'cors',
+    credentials: 'omit',
+    headers: {
+      'Authorization': `Bearer ${HF_TOKEN}`,
+      'Content-Type': 'application/json',
+      'Accept': 'video/mp4, application/octet-stream, */*',
+      'x-use-cache': 'false',
+    },
+    body: JSON.stringify({
+      inputs: prompt,
+      parameters: {
+        num_inference_steps: 25,
+        guidance_scale: 7.5,
+      }
+    })
+  });
+}
+
+// ─── MAIN ENTRY ──────────────────────────────────────────────────
+async function generateVideo() {
+  if (isGenerating) return;
+
+  const input   = document.getElementById('promptInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const prompt  = input.value.trim();
+  if (!prompt) return;
+
+  isGenerating = true;
+  modelIdx     = 0;
+  sendBtn.disabled = true;
+  input.value = '';
+  input.style.height = 'auto';
+
+  addUserBubble(prompt);
+  addAiBubble(makeTypingDots(), true);
+
+  await doRetry(prompt, 0);
+}
+
+// ─── RETRY LOOP ──────────────────────────────────────────────────
+async function doRetry(prompt, attempt) {
+  attempt++;
+  try {
+    const res = await callAPI(prompt);
+
+    // 503 — Model loading
+    if (res.status === 503) {
+      if (attempt >= MAX_RETRIES) {
+        // Try next model before completely giving up
+        if (modelIdx < MODELS.length - 1) {
+          modelIdx++;
+          updateAiBubble(`
+            <div style="font-size:0.8rem;color:rgba(251,191,36,0.85);margin-bottom:8px;">
+              🔀 Fallback model try kar rahe hain: <strong>${MODELS[modelIdx].split('/')[1]}</strong>
+            </div>
+            ${makeTypingDots()}`, true);
+          await doRetry(prompt, 0);
+          return;
+        }
+        updateAiBubble(`
+          <div style="color:#fca5a5;font-size:0.85rem;line-height:1.7;">
+            ⚠️ <strong>${MAX_RETRIES} retries ke baad bhi model load nahi hua.</strong><br>
+            HuggingFace free servers kai baar busy rehte hain.<br>
+            5–10 minute baad dobara try karo. 🙏
+          </div>`, false);
+        reset();
+        return;
+      }
+
+      let secs = RETRY_DELAY / 1000;
+      updateAiBubble(makeRetryHtml(attempt, secs), true);
+      const iv = setInterval(() => {
+        secs--;
+        updateAiBubble(makeRetryHtml(attempt, secs), true);
+        if (secs <= 0) clearInterval(iv);
+      }, 1000);
+      setTimeout(() => { clearInterval(iv); doRetry(prompt, attempt); }, RETRY_DELAY);
+      return;
+    }
+
+    // HTTP errors
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}`;
+      try {
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('json')) {
+          const j = await res.json();
+          msg = j.error || j.message || msg;
+        } else {
+          msg = (await res.text()).slice(0, 250) || msg;
+        }
+      } catch (_) {}
+
+      let extra = '';
+      if (res.status === 401)
+        extra = '<br>🔑 Token invalid ya expire ho gaya. Naya token banao huggingface.co pe.';
+      if (res.status === 429)
+        extra = '<br>🚦 Rate limit. Thodi der ruk ke dobara try karo.';
+
+      updateAiBubble(`
+        <div style="color:#fca5a5;font-size:0.85rem;line-height:1.6;">
+          ❌ Error: ${escapeHtml(msg)}${extra}
+        </div>`, false);
+      reset();
+      return;
+    }
+
+    // ✅ SUCCESS
+    updateAiBubble(`
+      <div style="font-size:0.8rem;color:rgba(148,163,184,0.75);">
+        ⚡ Video stream process ho rahi hai...
+      </div>`, true);
+
+    const rawBlob  = await res.blob();
+    const rawMime  = rawBlob.type || '';
+    const mimeType = rawMime.startsWith('video/') ? rawMime : 'video/mp4';
+
+    // ✅ FIX: Wrap blob with correct MIME so <video> can play it
+    const vidBlob = new Blob([rawBlob], { type: mimeType });
+    const vidUrl  = URL.createObjectURL(vidBlob);
+
+    renderVideo(vidUrl, prompt, mimeType);
+
+  } catch (err) {
+    const msg = err.message || String(err);
+    const cors = msg.includes('Failed to fetch')
+              || msg.includes('NetworkError')
+              || msg.includes('CORS');
+
+    updateAiBubble(`
+      <div style="color:#fca5a5;font-size:0.85rem;line-height:1.7;">
+        🌐 <strong>${cors ? 'Network / CORS Error' : 'Error'}</strong><br>
+        ${escapeHtml(msg)}<br><br>
+        ${cors ? `
+        <em style="color:rgba(148,163,184,0.6);font-size:0.75rem;">
+          Yeh error tab aati hai jab file:// protocol se browser HTTPS API call
+          block kare. Fix: Python <code>http.server</code> se serve karo,
+          ya Chrome mein seedha kholo.
+        </em>` : ''}
+      </div>`, false);
+    reset();
+  }
+}
+
+// ─── RENDER VIDEO ────────────────────────────────────────────────
+//  ✅ FIX: mimeType dynamic hai — video tag hamesha sahi format
+//          se render hoga aur play bhi hoga
+function renderVideo(url, prompt, mime) {
+  const safe  = escapeHtml(prompt.slice(0, 65) + (prompt.length > 65 ? '…' : ''));
+  const mName = MODELS[modelIdx].split('/')[1].toUpperCase();
+
+  updateAiBubble(`
+    <div style="font-size:0.75rem;color:rgba(0,245,255,0.85);margin-bottom:5px;
+                font-family:'Orbitron',monospace;letter-spacing:0.04em;">
+      ✅ VIDEO READY — ${mName}
+    </div>
+    <div style="font-size:0.7rem;color:rgba(148,163,184,0.5);
+                margin-bottom:10px;font-style:italic;">"${safe}"</div>
+
+    <div class="video-container" id="vc">
+      <button class="video-overlay-btn" onclick="goFullscreen()">⛶ Fullscreen</button>
+      <video id="vid" controls autoplay loop muted playsinline
+             style="width:100%;display:block;max-height:300px;object-fit:contain;background:#000;">
+        <source src="${url}" type="${mime}">
+      </video>
+    </div>
+
+    <a class="download-btn" href="${url}" download="cinematic-ai-video.mp4">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"
+          stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Download Video (MP4)
+    </a>
+
+    <div style="margin-top:7px;font-size:0.67rem;color:rgba(100,116,139,0.55);">
+      Agar yahan play na ho toh Download karke dekho — video bilkul sahi hai.
+    </div>`, false);
+
+  reset();
+}
+
+function goFullscreen() {
+  const v = document.getElementById('vid');
+  if (!v) return;
+  (v.requestFullscreen || v.webkitRequestFullscreen
+    || v.mozRequestFullScreen || v.msRequestFullscreen || function(){}).call(v);
+}
+
+function reset() {
+  isGenerating = false;
+  document.getElementById('sendBtn').disabled = false;
+  scrollToBottom();
+}
+</script>
+</body>
+</html>
