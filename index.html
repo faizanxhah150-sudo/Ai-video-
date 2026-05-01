@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Cinematic AI — Video Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --cyan:#00f5ff;--blue:#3b82f6;--purple:#a855f7;
+  --glow:0 0 22px rgba(0,245,255,.42),0 0 60px rgba(0,245,255,.16);
+}
+*,::before,::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Sora',sans-serif;
+  background:linear-gradient(135deg,#020617 0%,#0f172a 55%,#0c0a1e 100%);
+  min-height:100vh;overflow:hidden;
+}
+
+/* ── Orbs ── */
+.orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.26;pointer-events:none}
+.o1{width:420px;height:420px;background:radial-gradient(circle,#3b82f6,transparent);top:-120px;left:-120px;animation:o1 24s ease-in-out infinite}
+.o2{width:520px;height:520px;background:radial-gradient(circle,#a855f7,transparent);bottom:-160px;right:-120px;animation:o2 30s ease-in-out infinite}
+.o3{width:360px;height:360px;background:radial-gradient(circle,#00f5ff,transparent);top:35%;left:45%;animation:o3 19s ease-in-out infinite}
+@keyframes o1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(70px,100px) scale(1.08)}66%{transform:translate(30px,-50px) scale(.94)}}
+@keyframes o2{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(-90px,-70px) scale(1.04)}75%{transform:translate(-40px,50px) scale(.92)}}
+@keyframes o3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(calc(-50% + 110px),calc(-50% - 70px)) scale(1.14)}}
+
+/* ── Layout ── */
+.app{
+  position:relative;z-index:10;
+  width:100%;max-width:800px;height:100vh;
+  margin:0 auto;display:flex;flex-direction:column;padding:0 14px;
+}
+
+/* ── Header ── */
+.hdr{
+  padding:14px 0 9px;
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.hlogo{
+  width:42px;height:42px;border-radius:12px;
+  background:linear-gradient(135deg,rgba(0,245,255,.12),rgba(59,130,246,.12));
+  border:1px solid rgba(0,245,255,.38);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--glow);
+}
+.htitle{
+  font-family:'Orbitron',monospace;font-weight:800;font-size:1.08rem;
+  letter-spacing:.08em;
+  background:linear-gradient(90deg,#00f5ff 0%,#a855f7 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hsub{font-size:.6rem;color:rgba(148,163,184,.58);letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+.hstatus{
+  margin-left:auto;display:flex;align-items:center;gap:6px;
+  font-family:'Orbitron',monospace;font-size:.56rem;
+  color:rgba(0,245,255,.6);letter-spacing:.06em;
+}
+.sdot{
+  width:7px;height:7px;border-radius:50%;background:#00f5ff;
+  box-shadow:0 0 8px #00f5ff,0 0 16px #00f5ff88;
+  animation:blink 2s ease-in-out infinite;flex-shrink:0;
+}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.38;transform:scale(.72)}}
+
+/* ── Info bar ── */
+.infobar{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(0,245,255,.04);border:1px solid rgba(0,245,255,.12);
+  border-radius:10px;padding:6px 14px;margin-bottom:8px;flex-shrink:0;
+}
+.ibar-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;flex-shrink:0;animation:blink 2s infinite}
+.ibar-txt{font-family:'Orbitron',monospace;font-size:.54rem;letter-spacing:.07em;color:rgba(0,245,255,.58)}
+
+/* ── Chat ── */
+.chat{
+  flex:1;overflow-y:auto;padding:12px 6px 14px;
+  display:flex;flex-direction:column;gap:14px;
+  scrollbar-width:thin;scrollbar-color:rgba(0,245,255,.18) transparent;
+  background:rgba(255,255,255,.018);
+  backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);
+  border:1px solid rgba(255,255,255,.085);border-radius:20px;
+  box-shadow:0 0 0 1px rgba(0,245,255,.065),0 10px 36px rgba(0,0,0,.5),var(--glow);
+}
+.chat::-webkit-scrollbar{width:4px}
+.chat::-webkit-scrollbar-thumb{background:rgba(0,245,255,.18);border-radius:4px}
+
+/* ── Bubbles ── */
+.row{display:flex;align-items:flex-end;gap:9px;padding:0 8px;animation:up .3s ease-out}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.row.me{flex-direction:row-reverse}
+.av{
+  width:29px;height:29px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:700;
+}
+.av.ai{background:linear-gradient(135deg,rgba(0,245,255,.14),rgba(168,85,247,.14));border:1px solid rgba(0,245,255,.28);color:#00f5ff}
+.av.me{background:linear-gradient(135deg,#3b82f6,#4f46e5);color:#fff}
+.bubble{max-width:80%;padding:11px 15px;font-size:.855rem;line-height:1.62;word-break:break-word}
+.bubble.me{
+  background:linear-gradient(135deg,#2563eb,#4338ca);
+  border-radius:18px 18px 0 18px;color:#e0e7ff;
+  box-shadow:0 4px 18px rgba(37,99,235,.3);
+}
+.bubble.ai{
+  background:rgba(255,255,255,.068);
+  backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.088);
+  border-radius:18px 18px 18px 0;color:#cbd5e1;
+  box-shadow:0 4px 22px rgba(0,0,0,.26);
+}
+.bubble.ai.gen{position:relative;overflow:hidden}
+.bubble.ai.gen::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(90deg,transparent,rgba(0,245,255,.1),transparent);
+  animation:shim 1.8s linear infinite;
+}
+@keyframes shim{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.bubble.ai.gen::after{
+  content:'';position:absolute;inset:-1px;border-radius:inherit;
+  border:1px solid rgba(0,245,255,.42);
+  animation:glow 1.4s ease-in-out infinite;
+}
+@keyframes glow{0%,100%{box-shadow:0 0 6px rgba(0,245,255,.2)}50%{box-shadow:0 0 18px rgba(0,245,255,.52)}}
+
+/* ── Progress ── */
+.prog-wrap{margin-top:9px;background:rgba(255,255,255,.04);border-radius:99px;height:5px;overflow:hidden;border:1px solid rgba(0,245,255,.12)}
+.prog-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,#00f5ff,#3b82f6,#a855f7);background-size:200%;animation:pglow 2s linear infinite;transition:width .6s ease}
+@keyframes pglow{0%{background-position:0%}100%{background-position:200%}}
+.prog-lbl{font-size:.66rem;color:rgba(0,245,255,.7);margin-top:5px;font-family:'Orbitron',monospace;letter-spacing:.04em}
+
+/* ── Dots ── */
+.dots{display:flex;gap:5px;align-items:center;padding:3px 0}
+.dots span{width:5px;height:5px;border-radius:50%;background:rgba(0,245,255,.6);animation:db 1.2s ease-in-out infinite}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes db{0%,80%,100%{transform:translateY(0);opacity:.38}40%{transform:translateY(-5px);opacity:1}}
+
+/* ── Error bubble ── */
+.err-bbl{
+  background:rgba(239,68,68,.09);border:1px solid rgba(239,68,68,.2);
+  color:#fca5a5;border-radius:18px 18px 18px 0;
+  padding:11px 15px;font-size:.84rem;max-width:84%;line-height:1.68;
+}
+
+/* ── Video ── */
+.vid-card{margin-top:10px;border-radius:13px;overflow:hidden;border:1px solid rgba(0,245,255,.18);box-shadow:0 0 28px rgba(0,245,255,.13);position:relative;background:#000}
+.vid-card video{width:100%;display:block;max-height:290px;object-fit:contain;background:#000}
+.fs-btn{
+  position:absolute;top:8px;right:8px;
+  background:rgba(0,0,0,.68);border:1px solid rgba(0,245,255,.28);
+  color:#00f5ff;padding:4px 10px;border-radius:7px;font-size:.62rem;
+  cursor:pointer;backdrop-filter:blur(8px);transition:all .2s;z-index:5;
+  font-family:'Sora',sans-serif;
+}
+.fs-btn:hover{background:rgba(0,245,255,.16)}
+.dl-btn{
+  display:inline-flex;align-items:center;gap:7px;margin-top:9px;
+  background:linear-gradient(135deg,rgba(0,245,255,.08),rgba(59,130,246,.08));
+  border:1px solid rgba(0,245,255,.2);color:#00f5ff;
+  padding:8px 16px;border-radius:9px;font-size:.77rem;
+  cursor:pointer;text-decoration:none;font-family:'Sora',sans-serif;
+  font-weight:500;transition:all .25s;
+}
+.dl-btn:hover{background:linear-gradient(135deg,rgba(0,245,255,.18),rgba(59,130,246,.18));transform:translateY(-1px)}
+
+/* ── Welcome ── */
+.welcome{
+  text-align:center;padding:20px 14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;
+}
+.w-icon{
+  width:56px;height:56px;border-radius:17px;
+  background:linear-gradient(135deg,rgba(0,245,255,.09),rgba(168,85,247,.09));
+  border:1px solid rgba(0,245,255,.18);
+  display:flex;align-items:center;justify-content:center;font-size:1.55rem;
+  box-shadow:var(--glow);animation:float 4s ease-in-out infinite;
+}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.w-title{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:#e2e8f0;letter-spacing:.06em}
+.w-desc{font-size:.77rem;color:rgba(148,163,184,.7);max-width:330px;line-height:1.72}
+.w-note{
+  background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);
+  border-radius:11px;padding:10px 13px;
+  font-size:.7rem;color:rgba(251,191,36,.8);line-height:1.8;max-width:330px;text-align:left;
+}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chip{
+  font-size:.58rem;background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.15);
+  color:rgba(0,245,255,.7);border-radius:99px;padding:3px 10px;
+  letter-spacing:.06em;font-family:'Orbitron',monospace;
+}
+
+/* ── Input ── */
+.inp-wrap{padding:8px 0 14px;flex-shrink:0}
+.inp-bar{
+  display:flex;align-items:flex-end;gap:9px;
+  background:rgba(255,255,255,.038);backdrop-filter:blur(30px);
+  border:1px solid rgba(255,255,255,.085);border-radius:27px;
+  padding:9px 12px;
+  box-shadow:0 0 0 1px rgba(0,245,255,.065),0 8px 28px rgba(0,0,0,.36);
+  transition:box-shadow .3s;
+}
+.inp-bar:focus-within{box-shadow:0 0 0 1px rgba(0,245,255,.3),0 8px 28px rgba(0,0,0,.36),var(--glow)}
+.ico{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:rgba(148,163,184,.48);background:transparent;border:none;transition:all .2s;
+}
+.ico:hover{color:rgba(0,245,255,.72);background:rgba(0,245,255,.06)}
+.txt{
+  flex:1;background:transparent;border:none;outline:none;color:#e2e8f0;
+  font-family:'Sora',sans-serif;font-size:.87rem;line-height:1.5;resize:none;
+  max-height:116px;min-height:23px;padding:5px 0;
+}
+.txt::placeholder{color:rgba(100,116,139,.58)}
+.snd{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  box-shadow:0 0 14px rgba(59,130,246,.4),0 0 28px rgba(59,130,246,.16);
+  transition:all .25s;
+}
+.snd:hover{transform:scale(1.08);box-shadow:0 0 22px rgba(59,130,246,.6),0 0 44px rgba(59,130,246,.26)}
+.snd:active{transform:scale(.95)}
+.snd:disabled{opacity:.36;cursor:not-allowed;transform:none;box-shadow:none}
+.inp-foot{text-align:center;margin-top:4px;font-size:.55rem;color:rgba(100,116,139,.38);font-family:'Orbitron',monospace;letter-spacing:.08em}
+
+@media(max-width:600px){.bubble{max-width:88%}.w-title{font-size:.9rem}.htitle{font-size:.92rem}}
+</style>
+</head>
+<body>
+
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+<div class="orb o3"></div>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="hdr">
+    <div class="hlogo">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
+        <path d="M15 10l4.553-2.277A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"
+          stroke="#00f5ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="htitle">CINEMATIC AI</div>
+      <div class="hsub">Video Production Suite v2</div>
+    </div>
+    <div class="hstatus">
+      <div class="sdot"></div>
+      <span>LIVE</span>
+    </div>
+  </div>
+
+  <!-- Info bar -->
+  <div class="infobar">
+    <div class="ibar-dot"></div>
+    <div class="ibar-txt">SERVER PROXY · NO CORS · ZEROSCOPE V2 + FALLBACK · 10× AUTO-RETRY · ALL ERRORS HANDLED</div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat" id="chat">
+    <div class="welcome" id="welcome">
+      <div class="w-icon">🎬</div>
+      <div class="w-title">VIDEO AI SUITE</div>
+      <div class="w-desc">Apni cinematic scene describe karo — AI real video banayega aur seedha yahan play hogi.</div>
+      <div class="w-note">
+        ⚡ <strong>AI Limit:</strong> Abhi 2–8 second clips banti hain (Sora, Runway, Kling sab ki yahi limit hai).<br><br>
+        ✅ Video yahan <strong>play</strong> hogi + <strong>download</strong> button bhi milega.<br>
+        🔄 Model cold ho to <strong>10× auto-retry</strong> countdown ke saath.
+      </div>
+      <div class="chips">
+        <span class="chip">ZEROSCOPE V2</span>
+        <span class="chip">FREE API</span>
+        <span class="chip">SERVER PROXY</span>
+        <span class="chip">10× RETRY</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="inp-wrap">
+    <div class="inp-bar">
+      <button class="ico" onclick="document.getElementById('fi').click()" title="Attach">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <input type="file" id="fi" style="display:none" accept="image/*,video/*"/>
+      <textarea id="pmt" class="txt"
+        placeholder="Scene describe karo... (e.g. 'Cat eating pizza, 4K cinematic lighting, slow motion close-up')"
+        rows="1" oninput="rsz(this)" onkeydown="onK(event)"></textarea>
+      <button class="snd" id="sndBtn" onclick="startGen()" title="Generate Video">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="white"/>
+        </svg>
+      </button>
+    </div>
+    <div class="inp-foot">ENTER TO GENERATE · ZEROSCOPE V2 · SERVER PROXY</div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  CLIENT — calls /api/generate (Vercel proxy only)
+//  All logic: retry, error handling, video play/download
+// ══════════════════════════════════════════════════════════════
+const PROXY     = "/api/generate";
+const MAX_RETRY = 10;
+const WAIT_SEC  = 12;   // seconds between retries (server warm-up)
+
+let busy = false;
+let mIdx = 0;           // 0=zeroscope, 1=text-to-video fallback
+
+// ── Helpers ──────────────────────────────────────────────────
+function rsz(el){ el.style.height="auto"; el.style.height=Math.min(el.scrollHeight,116)+"px"; }
+function onK(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); startGen(); } }
+function sb(){ const c=document.getElementById("chat"); c.scrollTop=c.scrollHeight; }
+function rmW(){ const w=document.getElementById("welcome"); if(w)w.remove(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// ── Add bubbles ───────────────────────────────────────────────
+function addUserBubble(txt){
+  rmW();
+  const c=document.getElementById("chat"), r=document.createElement("div");
+  r.className="row me";
+  r.innerHTML=`<div class="av me">U</div><div class="bubble me">${esc(txt)}</div>`;
+  c.appendChild(r); sb();
+}
+
+function addAIBubble(html, loading=false){
+  rmW();
+  const c=document.getElementById("chat"), r=document.createElement("div");
+  r.className="row"; r.id="aiRow";
+  r.innerHTML=`<div class="av ai">AI</div><div class="bubble ai${loading?" gen":""}" id="aiB">${html}</div>`;
+  c.appendChild(r); sb();
+}
+
+function updateAI(html, loading=false){
+  const b=document.getElementById("aiB"); if(!b)return;
+  b.innerHTML=html;
+  loading ? b.classList.add("gen") : b.classList.remove("gen");
+  sb();
+}
+
+// ── HTML templates ────────────────────────────────────────────
+function htmlDots(){
+  return `<div class="dots"><span></span><span></span><span></span></div>
+<div style="margin-top:5px;font-size:.76rem;color:rgba(148,163,184,.62);">Video generate ho rahi hai...</div>`;
+}
+
+function htmlRetry(n, s){
+  const pct = Math.min(100, (n/MAX_RETRY)*100);
+  return `
+<div style="font-size:.77rem;color:rgba(148,163,184,.8);margin-bottom:6px;">
+  🔥 Model warm ho raha hai — please wait...
+</div>
+<div class="prog-wrap"><div class="prog-bar" id="pb" style="width:${pct}%"></div></div>
+<div class="prog-lbl">Retry ${n}/${MAX_RETRY} · Retrying in ${Math.max(0,s)}s...</div>`;
+}
+
+function htmlError(code, msg, hint=""){
+  return `<div style="font-size:.83rem;line-height:1.7;">
+  <span style="font-size:.88rem;font-weight:600;">❌ Error ${code}</span><br>
+  ${esc(msg)}${hint ? "<br><br>"+hint : ""}
+</div>`;
+}
+
+// ── Main ──────────────────────────────────────────────────────
+async function startGen(){
+  if(busy) return;
+  const inp  = document.getElementById("pmt");
+  const btn  = document.getElementById("sndBtn");
+  const text = inp.value.trim();
+  if(!text) return;
+
+  busy=true; mIdx=0;
+  btn.disabled=true;
+  inp.value=""; inp.style.height="auto";
+
+  addUserBubble(text);
+  addAIBubble(htmlDots(), true);
+  await retry(text, 0);
+}
+
+async function retry(prompt, attempt){
+  attempt++;
+  try {
+    const res = await fetch(PROXY, {
+      method: "POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ prompt, modelIndex: mIdx }),
+    });
+
+    // ── 503: Model loading → countdown + auto-retry ──────────
+    if(res.status === 503){
+      if(attempt >= MAX_RETRY){
+        // Try fallback model
+        if(mIdx < 1){
+          mIdx=1;
+          updateAI(`<div style="font-size:.77rem;color:rgba(251,191,36,.82);margin-bottom:7px;">
+            🔀 Switching to fallback model...</div>${htmlDots()}`, true);
+          await retry(prompt, 0); return;
+        }
+        updateAI(htmlError(503,
+          "Dono models ${MAX_RETRY} retries ke baad bhi warm nahi hue.",
+          "5–10 minute baad dobara try karo. HuggingFace free servers peak pe busy hote hain."
+        ), false);
+        done(); return;
+      }
+
+      let secs = WAIT_SEC;
+      updateAI(htmlRetry(attempt, secs), true);
+      const iv = setInterval(()=>{
+        secs--;
+        updateAI(htmlRetry(attempt, secs), true);
+        if(secs<=0) clearInterval(iv);
+      }, 1000);
+      setTimeout(()=>{ clearInterval(iv); retry(prompt, attempt); }, WAIT_SEC*1000);
+      return;
+    }
+
+    // ── Parse error JSON from proxy ──────────────────────────
+    if(!res.ok){
+      let body={};
+      try{ body=await res.json(); }catch(_){ body={error:`HTTP ${res.status}`}; }
+      const msg  = body.message || body.error || `HTTP ${res.status}`;
+      let hint = "";
+
+      switch(res.status){
+        case 400: hint="Prompt empty ya invalid hai — kuch likhke send karo."; break;
+        case 401: hint="HuggingFace token expire ho gaya. Vercel Dashboard mein <b>HF_TOKEN</b> update karo."; break;
+        case 403: hint="Model gated hai ya PRO subscription chahiye."; break;
+        case 404: hint="Model HuggingFace pe nahi mila. Dono models unavailable hain."; break;
+        case 405: hint="Server configuration error. Vercel redeploy karo."; break;
+        case 429: hint="Rate limit! 60 seconds ruko phir try karo."; break;
+        case 500: hint="Server error. Ek baar aur try karo."; break;
+        case 502: hint="HuggingFace ne empty response diya. Dobara try karo."; break;
+      }
+      updateAI(htmlError(res.status, msg, hint), false);
+      done(); return;
+    }
+
+    // ── SUCCESS ───────────────────────────────────────────────
+    updateAI(`<div style="font-size:.76rem;color:rgba(148,163,184,.68);">⚡ Video download ho rahi hai...</div>`, true);
+
+    const raw   = await res.blob();
+    const mime  = raw.type.startsWith("video/") ? raw.type : "video/mp4";
+    const vb    = new Blob([raw], { type: mime });
+    const vurl  = URL.createObjectURL(vb);
+    showVideo(vurl, prompt, mime);
+
+  } catch(err){
+    // ── Network error (no internet, proxy down) ──────────────
+    updateAI(htmlError("NET",
+      err.message,
+      "Internet connection check karo ya Vercel pe dobara deploy karo."
+    ), false);
+    done();
+  }
+}
+
+// ── Show video ────────────────────────────────────────────────
+function showVideo(url, prompt, mime){
+  const lbl = esc(prompt.slice(0,70)+(prompt.length>70?"…":""));
+  updateAI(`
+<div style="font-size:.72rem;color:rgba(0,245,255,.82);margin-bottom:4px;font-family:'Orbitron',monospace;letter-spacing:.04em;">
+  ✅ VIDEO READY
+</div>
+<div style="font-size:.66rem;color:rgba(148,163,184,.42);margin-bottom:9px;font-style:italic;">"${lbl}"</div>
+
+<div class="vid-card">
+  <button class="fs-btn" onclick="goFullscreen()">⛶ Fullscreen</button>
+  <video id="vid" controls autoplay loop muted playsinline
+         style="width:100%;display:block;max-height:285px;object-fit:contain;background:#000;">
+    <source src="${url}" type="${mime}">
+    Your browser does not support video.
+  </video>
+</div>
+
+<a class="dl-btn" href="${url}" download="cinematic-video.mp4">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"
+      stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  Download MP4
+</a>
+<div style="margin-top:5px;font-size:.62rem;color:rgba(100,116,139,.44);">
+  Play nahi hui? Download karke gallery mein dekho.
+</div>`, false);
+  done();
+}
+
+function goFullscreen(){
+  const v=document.getElementById("vid"); if(!v)return;
+  (v.requestFullscreen||v.webkitRequestFullscreen||v.mozRequestFullScreen||function(){}).call(v);
+}
+
+function done(){
+  busy=false;
+  document.getElementById("sndBtn").disabled=false;
+  sb();
+}
+</script>
+</body>
+</html>
